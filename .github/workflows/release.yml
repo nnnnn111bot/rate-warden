@@ -46,14 +46,16 @@ jobs:
           python -m pip install pillow
           python assets/make_icon.py
 
-      - name: PyInstaller 打包（onedir）
+       - name: PyInstaller 打包（onedir）
         shell: pwsh
         run: |
-          $icon = ""
-          if (Test-Path assets/rate_warden.ico) { $icon = "--icon assets/rate_warden.ico" }
+          $iconArgs = @()
+          if (Test-Path assets/rate_warden.ico) {
+            $iconArgs = @("--icon", "assets/rate_warden.ico")
+          }
           pyinstaller --noconfirm --clean --onedir --windowed `
             --name RateWarden `
-            $icon `
+            @iconArgs `
             --add-data "rate_warden/rules/*.py;rate_warden/rules" `
             --hidden-import dghub_sdk `
             main.py
