@@ -11,6 +11,12 @@
 [![License](https://img.shields.io/badge/license-MIT-green)](./LICENSE)
 [![Platform](https://img.shields.io/badge/platform-Windows-0078D6?logo=windows&logoColor=white)](#已知限制)
 
+<!-- CI 徽章：把 USER/REPO 换成实际仓库地址后取消注释 -->
+<!--
+[![CI](https://github.com/USER/REPO/actions/workflows/ci.yml/badge.svg)](https://github.com/USER/REPO/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/USER/REPO?include_prereleases&label=release)](https://github.com/USER/REPO/releases)
+-->
+
 ---
 
 ## 目录
@@ -260,28 +266,59 @@ rate_warden/
 ├─ rules_user/             你自己导入的规则（*.py 不入库）
 ├─ waves/                  波形库（library.json）
 ├─ logs/                   运行日志（*.jsonl 不入库）
-└─ docs/screenshots/       README 截图
+├─ assets/
+│  ├─ make_icon.py         生成多尺寸 .ico（Pillow）
+│  └─ rate_warden.ico      exe 图标
+├─ .github/workflows/
+│  ├─ ci.yml               push/PR 自动跑 16 项自检
+│  └─ release.yml          推送 v* 标签构建 zip 并生成草稿 Release
+└─ docs/
+   ├─ screenshots/         README 截图
+   └─ RELEASING.md         发版流程
 ```
 
 ---
 
 ## 打包与分发
 
-两种分发方式：
+三种分发方式：
 
-**① 独立 exe（PyInstaller）**
+**① 自动发布（推荐）**
+
+推送 `v*` 标签即可触发 GitHub Actions，自动跑自检、用 PyInstaller 打包 `--onedir` 版本、
+生成 Windows zip，并创建一条**草稿** Release 等你审核发布。
+完整流程见 [docs/RELEASING.md](docs/RELEASING.md)。
 
 ```powershell
-pyinstaller --onedir --windowed --name RateWarden ^
+git tag v1.0.0
+git push origin v1.0.0
+```
+
+**② 本地手动打包（PyInstaller）**
+
+```powershell
+python -m pip install pyinstaller pillow
+python assets/make_icon.py                          # 生成多尺寸 assets/rate_warden.ico
+pyinstaller --noconfirm --clean --onedir --windowed ^
+  --name RateWarden ^
+  --icon assets/rate_warden.ico ^
+  --add-data "rate_warden/rules/*.py;rate_warden/rules" ^
   --hidden-import dghub_sdk ^
   main.py
+python scripts/make_stdlib_zip.py dist/RateWarden/_internal
 ```
 
 - **用 `--onedir`，不要用 `--onefile`**：Qt6 的 `--onefile` 不会自动部署平台插件，目标机容易报 `platform plugin not found`。
-- 打包后对 `dist/RateWarden` 里的 Qt DLL 跑一次 `windeployqt`。
+- 打包后对 `dist/RateWarden` 里的 Qt DLL 跑一次 `windeployqt`（CI 环境里 `windows-latest` 已带）。
+- `--add-data "rate_warden/rules/*.py;rate_warden/rules"` **是必需的**：规则是运行期从磁盘动态加载的，
+  PyInstaller 默认会把它们编进 PYZ 归档、磁盘上没有 `.py` 文件，规则的静态检查和热重载都会失效。
+- `scripts/make_stdlib_zip.py` **也是必需的**：同一原因，动态加载的规则 import 的纯 Python 标准库
+  （`difflib`、`textwrap` 等）不会被静态分析发现，打包后会在运行期 `ModuleNotFoundError`。
+  该脚本把标准库顶层 `*.py` 收进 `_internal/_stdlib.zip`，由 `config.py` 在冻结时挂到 `sys.path`。
 - `rules_user/`、`waves/`、`logs/` 必须留在 exe **外面**，规则才能热加载、波形库才能编辑。
+- `assets/make_icon.py` 用 Pillow 生成多尺寸 `.ico`（16/32/48/64/128/256），改图标只需改这个脚本。
 
-**② 作为 DGHub 插件**
+**③ 作为 DGHub 插件**
 
 `manifest.json` 已按 DGHub 插件清单写好（`entry` 指向 `dghub_plugin/main.py`，带 `startup_check` 能力）。
 把整个 `rate_warden/` 目录放进 DGHub 的插件目录即可，DGHub 拉起时会先上报启动检查，再打开 GUI。

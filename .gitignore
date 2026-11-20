@@ -12,6 +12,12 @@ dist/
 venv/
 env/
 
+# ---- 临时预览图 ----
+assets/_preview.png
+
+# ---- PyInstaller 产物 ----
+RateWarden.spec
+
 # ---- 运行产物（首次运行自动生成，不入库）----
 config.json
 logs/*.jsonl

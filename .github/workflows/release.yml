@@ -1,0 +1,99 @@
+name: Release
+
+# 推送 v* 标签时构建 Windows 发行包，并生成一条 **草稿** Release。
+# 草稿需要在 GitHub Release 页面手动点 Publish 才会对外可见。
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: 构建 Windows x64 发行包
+    runs-on: windows-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: requirements.txt
+
+      - name: 安装依赖
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt pyinstaller
+
+      - name: 可选依赖 dghub-sdk（缺失不影响构建）
+        continue-on-error: true
+        run: python -m pip install dghub-sdk
+
+      - name: 构建前先跑自检
+        run: python main.py --check
+
+      - name: 生成图标（可选）
+        shell: pwsh
+        continue-on-error: true
+        run: |
+          python -m pip install pillow
+          python assets/make_icon.py
+
+      - name: PyInstaller 打包（onedir）
+        shell: pwsh
+        run: |
+          $icon = ""
+          if (Test-Path assets/rate_warden.ico) { $icon = "--icon assets/rate_warden.ico" }
+          pyinstaller --noconfirm --clean --onedir --windowed `
+            --name RateWarden `
+            $icon `
+            --add-data "rate_warden/rules/*.py;rate_warden/rules" `
+            --hidden-import dghub_sdk `
+            main.py
+
+      - name: 补纯标准库（规则是动态加载的，PyInstaller 看不到其 import）
+        run: python scripts/make_stdlib_zip.py dist/RateWarden/_internal
+
+      - name: 组装外置目录与文档
+        shell: pwsh
+        run: |
+          $out = "dist/RateWarden"
+          Copy-Item config.example.json $out/
+          Copy-Item README.md $out/
+          Copy-Item LICENSE $out/
+          New-Item -ItemType Directory -Force "$out/rules_user", "$out/waves", "$out/logs" | Out-Null
+          Copy-Item waves/library.json "$out/waves/"
+          Set-Content -Path "$out/rules_user/README.txt" -Encoding utf8 `
+            -Value "把你自己的规则 (*.py) 放在这里，重启程序后会出现在规则页。"
+
+      - name: 打包 zip
+        shell: pwsh
+        run: |
+          $name = "RateWarden-${{ github.ref_name }}-windows-x64"
+          Compress-Archive -Path "dist/RateWarden/*" -DestinationPath "$name.zip"
+          Write-Host "产出: $name.zip"
+
+      - name: 生成草稿 Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: RateWarden-${{ github.ref_name }}-windows-x64.zip
+          generate_release_notes: true
+          draft: true
+          body: |
+            ## 安装
+
+            1. 下载下方 `RateWarden-${{ github.ref_name }}-windows-x64.zip` 并解压到任意目录（不要放在需要管理员权限的路径）。
+            2. 双击 `RateWarden.exe`。首次启动会自动生成 `config.json`。
+            3. 想确认程序本身正常，可先运行 `RateWarden.exe --version`（控制台版可用 `python main.py --check`）。
+
+            ## 使用前提
+
+            - 惩罚要真正下发，需要电脑上运行 **DGHub 主程序**，手机 DGHub APP 与 DGLab 设备已连接。
+            - N1MM：`Config → Configure Ports → Broadcast Data` 勾选 **Contacts**，地址 `127.0.0.1`，端口 `12060`。
+            - 没有 DGHub 时程序自动降级为「只记录」，不会崩溃。
+
+            ⚠️ **首次使用请先保持 `master_enabled` 关闭，用 `--demo` 验证规则行为，再逐条启用。**
