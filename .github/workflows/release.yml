@@ -46,7 +46,7 @@ jobs:
           python -m pip install pillow
           python assets/make_icon.py
 
-       - name: PyInstaller 打包（onedir）
+      - name: PyInstaller 打包（onedir）
         shell: pwsh
         run: |
           $iconArgs = @()
