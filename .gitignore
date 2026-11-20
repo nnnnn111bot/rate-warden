@@ -1,0 +1,29 @@
+# ---- Python ----
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+.eggs/
+build/
+dist/
+*.spec
+.venv/
+venv/
+env/
+
+# ---- 运行产物（首次运行自动生成，不入库）----
+config.json
+logs/*.jsonl
+logs/*.log
+
+# ---- 个人规则：可能含个人呼号/比赛数据 ----
+rules_user/*.py
+!rules_user/.gitkeep
+
+# ---- 编辑器与系统 ----
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+desktop.ini

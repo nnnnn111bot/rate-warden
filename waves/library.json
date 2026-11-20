@@ -1,0 +1,37 @@
+[
+  {
+    "name": "CS2-受伤",
+    "alias": "短促刺痛",
+    "note": "高频短波形，适合提醒抄错呼号",
+    "source": "seed",
+    "tags": []
+  },
+  {
+    "name": "CS2-死亡",
+    "alias": "重击",
+    "note": "较长较强，适合重复通联",
+    "source": "seed",
+    "tags": []
+  },
+  {
+    "name": "呼吸",
+    "alias": "缓脉冲",
+    "note": "低频变化，适合空窗提醒",
+    "source": "seed",
+    "tags": []
+  },
+  {
+    "name": "心跳",
+    "alias": "节拍",
+    "note": "中频规律脉冲",
+    "source": "seed",
+    "tags": []
+  },
+  {
+    "name": "脉冲",
+    "alias": "持续",
+    "note": "中低频持续输出",
+    "source": "seed",
+    "tags": []
+  }
+]

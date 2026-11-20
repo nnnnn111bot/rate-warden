@@ -1,0 +1,38 @@
+{
+  "id": "rate_warden",
+  "name": "Rate Warden 速率看守",
+  "version": "1.0.0",
+  "sdk": "1",
+  "author": "Rate Warden",
+  "description": "监听 N1MM Logger+ 的 UDP 广播，按可插拔规则判定空窗与操作失误，并通过 DGHub 对 DGLab 设备施加惩罚。",
+  "entry": "dghub_plugin/main.py",
+  "capabilities": {
+    "startup_check": true
+  },
+  "config_schema": [
+    {
+      "section": "N1MM",
+      "fields": [
+        { "key": "udp_port", "type": "number", "label": "UDP 端口", "default": 12060, "min": 1, "max": 65535, "step": 1,
+          "description": "与 N1MM Config → Configure Ports → Broadcast Data 中填写的端口一致" }
+      ]
+    },
+    {
+      "section": "安全",
+      "fields": [
+        { "key": "strength_cap", "type": "percent", "label": "强度上限", "default": 70,
+          "description": "任何规则叠加后的强度硬上限，建议先用 40-70 观察" },
+        { "key": "master_enabled", "type": "bool", "label": "启用惩罚", "default": true },
+        { "key": "preview_strength", "type": "percent", "label": "波形预览强度", "default": 5,
+          "description": "在 GUI 里试放波形时使用的极低强度" }
+      ]
+    },
+    {
+      "section": "节奏",
+      "fields": [
+        { "key": "heartbeat_hz", "type": "number", "label": "心跳频率(Hz)", "default": 4, "min": 1, "max": 60, "step": 1 },
+        { "key": "default_channel", "type": "channel", "label": "默认通道", "default": "both" }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "udp_port": 12060,
+  "udp_bind": "0.0.0.0",
+  "strength_cap": 70,
+  "heartbeat_hz": 4,
+  "default_channel": "both",
+  "plugin_id": "rate_warden",
+  "plugin_name": "Rate Warden",
+  "master_enabled": false,
+  "run_rules": {
+    "dupe": {
+      "enabled": true,
+      "params": {
+        "ignore_other_modes": true,
+        "strength": 60,
+        "duration_s": 2.0,
+        "waveform": "",
+        "channel": "both"
+      }
+    }
+  }
+}

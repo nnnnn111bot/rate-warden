@@ -1,0 +1,3 @@
+PySide6>=6.6
+# 可选：真实下发惩罚需要 dghub-sdk（DGHub 主程序也会自带）
+# dghub-sdk>=0.16
