@@ -10,6 +10,9 @@ jobs:
   selftest:
     name: 离线自检 (Windows / Python 3.12)
     runs-on: windows-latest
+    env:
+      PYTHONUTF8: "1"
+      PYTHONIOENCODING: "utf-8"
     steps:
       - uses: actions/checkout@v4
 
