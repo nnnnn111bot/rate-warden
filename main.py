@@ -7,8 +7,25 @@
 
 from __future__ import annotations
 
+import os
 import sys
 from pathlib import Path
+
+# ---- 必须在任何 print 之前：修 stdio 的两个 Windows 坑 ----
+# 1) PyInstaller --windowed：无控制台，sys.stdout/stderr 为 None，print 会 AttributeError
+# 2) Windows CI / cmd.exe：默认 cp1252，打印中文抛 UnicodeEncodeError
+if sys.stdout is None:
+    sys.stdout = open(os.devnull, "w", encoding="utf-8")
+if sys.stderr is None:
+    sys.stderr = open(os.devnull, "w", encoding="utf-8")
+
+for _stream in (sys.stdout, sys.stderr):
+    try:
+        _stream.reconfigure(encoding="utf-8", errors="backslashreplace")
+    except (AttributeError, ValueError):
+        # Python < 3.7 或非常规流：保持原样
+        pass
+# -----------------------------------------------------------
 
 if __package__ in (None, ""):
     sys.path.insert(0, str(Path(__file__).resolve().parent))
